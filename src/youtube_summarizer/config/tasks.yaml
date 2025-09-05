@@ -1,0 +1,52 @@
+transcript_task:
+  description: >
+    Fetch the full transcript from the YouTube URL: {youtube_url}. Use the best available
+    language automatically, unless a specific language is provided. Prepend a short
+    metadata header (video id, selected language, generation flag), then output the
+    raw transcript text.
+  expected_output: >
+    A short metadata header followed by the plain transcript text.
+  agent: transcript_extractor
+  output_file: transcript.md
+
+cleaning_task:
+  description: >
+    Normalize the transcript for readability: remove timestamps, filler words, and
+    duplicated lines; fix spacing and basic punctuation without changing meaning.
+    If a metadata header is present at the top, keep it intact or exclude it from cleaning
+    so that only the transcript body is altered.
+  expected_output: >
+    Clean, readable transcript text suitable for summarization (metadata header preserved or excluded cleanly).
+  agent: text_cleaner
+  context: [transcript_task]
+
+summarize_task:
+  description: >
+    Write a clear, well-structured summary capturing key points, main ideas, and any
+    important facts. Use brief headings and bullet points where helpful. Keep it concise.
+  expected_output: >
+    A concise markdown summary with short headings and bullet points as needed.
+  agent: summary_writer
+  context: [cleaning_task]
+
+review_task:
+  description: >
+    Check the summary for accuracy and completeness against the cleaned transcript.
+    If it covers the essentials and is clear, approve it. If not, request a rewrite.
+    Output only the final approved summary.
+  expected_output: >
+    The approved summary text ready to share.
+  agent: quality_checker
+  context: [cleaning_task, summarize_task]
+  output_file: SUMMARY.md
+
+gdocs_publish_task:
+  description: >
+    If publish_to_gdocs is True, create a Google Doc from the approved summary.
+    Use gdocs_title as the document title if provided, otherwise use a default title.
+    If publish_to_gdocs is False, skip this step and return a message that Google Docs publishing was not requested.
+  expected_output: >
+    Either a Google Docs URL (if published) or a message that publishing was skipped.
+  agent: docs_uploader
+  context: [review_task]
+
