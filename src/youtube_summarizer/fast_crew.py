@@ -1,3 +1,5 @@
+#FOR LATER, MORE EFFICIENT API USAGE AND RUNTIME
+
 from crewai import Agent, Crew, Process, Task
 from typing import List
 from dotenv import load_dotenv
